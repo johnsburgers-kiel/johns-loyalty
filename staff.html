@@ -32,6 +32,7 @@
   .ready b { color: #16a34a; }
   .card button { width: 140px; }
   .muted { color: #6b6b6b; font-size: .9rem; }
+  .liberty { display: block; width: 100%; max-width: 420px; margin: 24px auto 0; mix-blend-mode: multiply; opacity: .85; }
   @media (max-width: 700px) {
     .card { grid-template-columns: 1fr; }
     .stats { justify-content: space-between; }
@@ -58,6 +59,7 @@
 <main>
   <div id="view"></div>
 </main>
+<img class="liberty" src="liberty.png" alt="" onerror="this.style.display='none'">
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
