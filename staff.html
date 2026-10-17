@@ -22,6 +22,15 @@
   button:disabled { background: #fff; color: #bbb; border-color: #ddd; cursor: default; }
   button.link { background: none; border: 0; padding: 0; color: #fff; font-size: .78rem; letter-spacing: .14em; }
   button.link:hover:not(:disabled) { background: none; color: #bbb; }
+
+  /* Tabs */
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 20px; }
+  .tab { background: #fff; color: #000; }
+  .tab + .tab { border-left: 0; }
+  .tab:hover:not(.active) { background: #eee; color: #000; }
+  .tab.active, .tab.active:hover { background: #000; color: #fff; }
+
+  /* Kunden */
   .card { border: 2px solid #000; padding: 14px 16px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; }
   .who { min-width: 0; }
   .who b { font-family: "Times New Roman", Georgia, serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .03em; }
@@ -32,6 +41,35 @@
   .ready b { color: #16a34a; }
   .card button { width: 140px; }
   .muted { color: #6b6b6b; font-size: .9rem; }
+
+  /* Statistik */
+  .seg { display: flex; }
+  .seg button { background: #fff; color: #000; padding: 8px 14px; font-size: .75rem; }
+  .seg button + button { border-left: 0; }
+  .seg button:hover:not(.active) { background: #eee; color: #000; }
+  .seg button.active { background: #000; color: #fff; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 18px 0 8px; }
+  .kpi { border: 2px solid #000; padding: 12px 14px; }
+  .kpi b { display: block; font-size: 1.8rem; }
+  .kpi span { font-size: .66rem; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em; }
+  .sec { margin: 30px 0 10px; font-size: .78rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 6px; }
+  .brow { display: grid; grid-template-columns: 64px 1fr 44px; gap: 10px; align-items: center; margin: 5px 0; font-size: .85rem; }
+  .brow b { text-align: right; }
+  .track { display: flex; height: 14px; background: #f2f2f2; }
+  .fill { background: #000; height: 100%; }
+  .fill.new { background: #9a9a9a; }
+  .legend { font-size: .75rem; color: #6b6b6b; margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 12px; background: #000; vertical-align: -1px; }
+  .legend i.new { background: #9a9a9a; }
+  .legend i:first-child { margin-left: 0; }
+  .trow { display: grid; grid-template-columns: 28px 1fr 64px 64px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #ddd; }
+  .trow .rank { font-weight: 700; color: #6b6b6b; }
+  .trow .who b { font-size: 1rem; }
+  .num { text-align: center; font-size: .62rem; color: #6b6b6b; text-transform: uppercase; letter-spacing: .05em; }
+  .num b { display: block; font-size: 1.15rem; color: #000; letter-spacing: 0; }
+  .qrow { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #ddd; font-size: .9rem; }
+  .qrow small { display: block; color: #6b6b6b; }
+
   .liberty { display: block; width: 100%; max-width: 420px; margin: 24px auto 0; mix-blend-mode: multiply; opacity: .85; }
   @media (max-width: 700px) {
     .card { grid-template-columns: 1fr; }
@@ -42,6 +80,7 @@
   @media (max-width: 420px) {
     .logo { width: 44px; height: 44px; }
     .brand { font-size: 1.25rem; }
+    .trow { grid-template-columns: 22px 1fr 52px 52px; gap: 6px; }
   }
 </style>
 </head>
@@ -69,10 +108,15 @@ const logout = document.getElementById("logout");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "–");
 const punkte = (n) => `${n} ${n === 1 ? "Punkt" : "Punkte"}`;
+const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 let settings = { reward_cost: 10 };
 let timer;
 let seq = 0;
+let statSeq = 0;
+let tab = "kunden";
+let days = 30;
 
+/* ---------- Login ---------- */
 function showLogin(msg = "") {
   logout.hidden = true;
   view.innerHTML = `
@@ -84,15 +128,37 @@ function showLogin(msg = "") {
       email: document.getElementById("email").value.trim(),
       password: document.getElementById("pw").value,
     });
-    error ? showLogin("Anmeldung fehlgeschlagen.") : showSearch();
+    error ? showLogin("Anmeldung fehlgeschlagen.") : showApp();
   };
 }
 
-async function showSearch() {
+/* ---------- App shell with tabs ---------- */
+async function showApp() {
   logout.hidden = false;
   const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
   if (data) settings = data;
-  view.innerHTML = `<input id="q" type="search" placeholder="Name oder E-Mail suchen"><div id="list"></div>`;
+  view.innerHTML = `
+    <div class="tabs">
+      <button class="tab" id="t-kunden">Kunden</button>
+      <button class="tab" id="t-stats">Statistik</button>
+    </div>
+    <div id="tabview"></div>`;
+  document.getElementById("t-kunden").onclick = () => openTab("kunden");
+  document.getElementById("t-stats").onclick = () => openTab("stats");
+  openTab(tab);
+}
+
+function openTab(t) {
+  tab = t;
+  document.getElementById("t-kunden").classList.toggle("active", t === "kunden");
+  document.getElementById("t-stats").classList.toggle("active", t === "stats");
+  t === "kunden" ? showSearch() : showStats();
+}
+
+/* ---------- Kunden ---------- */
+function showSearch() {
+  const tv = document.getElementById("tabview");
+  tv.innerHTML = `<input id="q" type="search" placeholder="Name oder E-Mail suchen"><div id="list"></div>`;
   document.getElementById("q").oninput = (e) => {
     clearTimeout(timer);
     timer = setTimeout(() => search(e.target.value.trim()), 250);
@@ -105,6 +171,7 @@ async function search(q) {
   const { data, error } = await supabase.rpc("staff_search", { q });
   if (n !== seq) return;
   const list = document.getElementById("list");
+  if (!list) return;
   if (error) return (list.innerHTML = `<p class="muted">Kein Zugriff: ${esc(error.message)}</p>`);
   if (!data.length) return (list.innerHTML = `<p class="muted">Niemand gefunden.</p>`);
   list.innerHTML = data.map(card).join("");
@@ -129,13 +196,109 @@ async function redeem(c) {
   if (!confirm(`${punkte(settings.reward_cost)} von ${c.name || c.email} einlösen?`)) return;
   const { data, error } = await supabase.rpc("redeem_reward", { p_customer_id: c.id });
   if (error || !data.ok) alert("Einlösen fehlgeschlagen: " + (error?.message || data.reason));
-  search(document.getElementById("q").value.trim());
+  search(document.getElementById("q")?.value.trim() ?? "");
+}
+
+/* ---------- Statistik ---------- */
+function showStats() {
+  const tv = document.getElementById("tabview");
+  tv.innerHTML = `
+    <div class="seg">${[7, 30, 90].map((d) => `<button data-d="${d}" class="${d === days ? "active" : ""}">${d} Tage</button>`).join("")}</div>
+    <div id="statbox"><p class="muted">Lade …</p></div>`;
+  tv.querySelectorAll(".seg button").forEach((b) => (b.onclick = () => { days = Number(b.dataset.d); showStats(); }));
+  loadStats();
+}
+
+async function loadStats() {
+  const n = ++statSeq;
+  const { data, error } = await supabase.rpc("staff_stats", { p_days: days });
+  if (n !== statSeq) return;
+  const box = document.getElementById("statbox");
+  if (!box) return;
+  if (error) return (box.innerHTML = `<p class="muted">Kein Zugriff: ${esc(error.message)}</p>`);
+  box.innerHTML = renderStats(data);
+}
+
+const kpi = (n, label) => `<div class="kpi"><b>${n}</b><span>${label}</span></div>`;
+
+function bars(rows) {
+  const max = Math.max(0, ...rows.map((r) => r.n));
+  return rows.map((r) => `
+    <div class="brow"><span>${esc(r.label)}</span>
+      <div class="track"><div class="fill" style="width:${max ? (r.n / max) * 100 : 0}%"></div></div>
+      <b>${r.n}</b></div>`).join("");
+}
+
+function renderStats(s) {
+  const k = s.kpis;
+  const p = s.period_days;
+  let html = `<div class="kpis">
+    ${kpi(k.visits_today, "Besuche heute")}
+    ${kpi(k.visits_period, `Besuche · ${p} Tage`)}
+    ${kpi(k.unique_guests, `Gäste · ${p} Tage`)}
+    ${kpi(k.new_guests, `Neue Gäste · ${p} Tage`)}
+    ${kpi(k.redemptions, `Einlösungen · ${p} Tage`)}
+    ${kpi(k.total_customers, "Kunden gesamt")}
+  </div>`;
+
+  /* Top 20 */
+  html += `<h2 class="sec">Top 20 Gäste · ${p} Tage</h2>`;
+  html += s.top_guests.length
+    ? s.top_guests.map((g, i) => `
+      <div class="trow">
+        <span class="rank">${i + 1}</span>
+        <div class="who"><b>${esc(g.name) || "(kein Name)"}</b><div>${esc(g.email)} · zuletzt ${fmt(g.last_visit)}</div></div>
+        <div class="num"><b>${g.visits_period}</b>Zeitraum</div>
+        <div class="num"><b>${g.visits_total}</b>gesamt</div>
+      </div>`).join("")
+    : `<p class="muted">Noch keine Besuche in diesem Zeitraum.</p>`;
+
+  /* Hours: trim empty hours at both ends */
+  html += `<h2 class="sec">Uhrzeiten · ${p} Tage</h2>`;
+  const hrs = s.by_hour;
+  const a = hrs.findIndex((x) => x.n > 0);
+  const b = hrs.findLastIndex((x) => x.n > 0);
+  html += a === -1
+    ? `<p class="muted">Noch keine Daten.</p>`
+    : bars(hrs.slice(a, b + 1).map((x) => ({ label: `${x.hour} Uhr`, n: x.n })));
+
+  /* Weekdays */
+  html += `<h2 class="sec">Wochentage · ${p} Tage</h2>`;
+  html += bars(s.by_weekday.map((x) => ({ label: WEEKDAYS[x.dow - 1], n: x.n })));
+
+  /* 12 weeks new vs returning */
+  html += `<h2 class="sec">Neu vs. wiederkehrend · 12 Wochen</h2>
+    <div class="legend"><i></i>wiederkehrend<i class="new"></i>neu · Woche ab</div>`;
+  const wmax = Math.max(0, ...s.weekly.map((w) => w.new + w.returning));
+  html += s.weekly.map((w) => {
+    const label = new Date(w.week_start).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
+    const pct = (n) => (wmax ? (n / wmax) * 100 : 0);
+    return `<div class="brow"><span>${label}</span>
+      <div class="track"><div class="fill" style="width:${pct(w.returning)}%"></div><div class="fill new" style="width:${pct(w.new)}%"></div></div>
+      <b>${w.new + w.returning}</b></div>`;
+  }).join("");
+
+  /* Postcodes */
+  html += `<h2 class="sec">Top PLZ · ${p} Tage</h2>`;
+  html += s.postcodes.length
+    ? bars(s.postcodes.map((x) => ({ label: x.postcode, n: x.n })))
+    : `<p class="muted">Noch keine Daten.</p>`;
+
+  /* Data quality */
+  const q = s.quality;
+  html += `<h2 class="sec">Datenqualität</h2>
+    <div class="qrow"><div>Sperrzeit-Treffer · ${p} Tage<small>Erneuter Tap innerhalb der Sperrzeit, kein Punkt vergeben</small></div><b>${q.cooldown_hits}</b></div>
+    <div class="qrow"><div>Seite neu geladen · ${p} Tage<small>Gleicher Link erneut geöffnet, harmlos</small></div><b>${q.reloads}</b></div>
+    <div class="qrow"><div>PLZ fehlt / ungültig<small>Alle Kunden</small></div><b>${q.bad_postcodes}</b></div>`;
+
+  html += `<p class="muted" style="margin-top:20px">Stand ${new Date(s.generated_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr · Zeiten in Kieler Ortszeit</p>`;
+  return html;
 }
 
 logout.onclick = async () => { await supabase.auth.signOut(); showLogin(); };
 
 const { data: { session } } = await supabase.auth.getSession();
-session ? showSearch() : showLogin();
+session ? showApp() : showLogin();
 </script>
 </body>
 </html>
