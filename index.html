@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>John's Burgers · Stempelkarte</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #fff7ed; color: #1f1f1f; }
+  main { max-width: 420px; margin: 0 auto; padding: 32px 20px; text-align: center; }
+  h1 { margin: 0 0 8px; font-size: 1.6rem; }
+  p { line-height: 1.5; }
+  input[type=email], input[type=text] { width: 100%; box-sizing: border-box; font-size: 1.1rem; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 10px; }
+  button { width: 100%; margin-top: 8px; font-size: 1.1rem; padding: 14px; border: 0; border-radius: 10px; background: #c2410c; color: #fff; }
+  label.consent { display: flex; gap: 8px; align-items: flex-start; font-size: .85rem; text-align: left; }
+  .big { font-size: 2rem; font-weight: 700; margin: 8px 0; }
+  .muted { color: #666; font-size: .9rem; }
+  a { color: #c2410c; }
+</style>
+</head>
+<body>
+<main>
+  <h1>John's Burgers</h1>
+  <div id="view"></div>
+</main>
+<script>
+const ENDPOINT = "https://zhqxjdlqxgjzqamququu.supabase.co/functions/v1/checkin";
+const REWARD = "Gratis-Burger";
+const NAME = /^[\p{L}\p{M}\p{N} .'-]{1,60}$/u;
+const q = new URLSearchParams(location.search);
+const tap = { uid: q.get("uid"), ctr: q.get("ctr"), cmac: q.get("cmac") };
+const view = document.getElementById("view");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const time = (iso) => new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+function status(r) {
+  const available = Math.floor(r.points / r.reward_cost);
+  if (available > 1) return `<p>🎉 ${available} ${REWARD} warten auf dich – sag beim Bestellen Bescheid.</p>`;
+  if (available === 1) return `<p>🎉 Ein ${REWARD} wartet auf dich – sag beim Bestellen Bescheid.</p>`;
+  const left = Math.ceil((r.reward_cost - r.points) / r.points_per_visit);
+  return `<p class="muted">Noch ${left} ${left === 1 ? "Besuch" : "Besuche"} bis zum ${REWARD}.</p>`;
+}
+
+const messages = {
+  cooldown: (r) => `<p>Du warst gerade schon hier 🙂</p><p class="muted">Nächster Punkt ab ${time(r.retry_at)} Uhr.</p>${status(r)}`,
+  stale_counter: () => `<p>Dieser Link ist schon verbraucht.</p><p class="muted">Bitte das Handy noch einmal an den Burger halten.</p>`,
+  bad_mac: () => `<p>Ungültiger Tag.</p>`,
+  unknown_tag: () => `<p>Ungültiger Tag.</p>`,
+};
+
+function showForm() {
+  view.innerHTML = `
+    <p>Einmal eintragen, ab dann geht's automatisch.</p>
+    <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="deine@email.de">
+    <input id="name" type="text" autocomplete="name" placeholder="Name">
+    <input id="postcode" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="PLZ (optional)">
+    <label class="consent"><input id="consent" type="checkbox"> Ich bin einverstanden, dass meine Angaben für das Bonusprogramm gespeichert werden. <a href="datenschutz.html">Datenschutz</a></label>
+    <button id="go">Punkt sichern</button>`;
+  document.getElementById("go").onclick = () => {
+    const email = document.getElementById("email").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const postcode = document.getElementById("postcode").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Bitte eine gültige E-Mail eingeben.");
+    if (!NAME.test(name)) return alert("Bitte einen Namen eingeben (Buchstaben, Leerzeichen, Bindestrich).");
+    if (postcode && !/^\d{5}$/.test(postcode)) return alert("PLZ bitte mit 5 Ziffern.");
+    if (!document.getElementById("consent").checked) return alert("Bitte der Speicherung zustimmen.");
+    localStorage.setItem("email", email);
+    claim({ email, name, postcode });
+  };
+}
+
+async function claim(who) {
+  view.innerHTML = `<p>Einen Moment …</p>`;
+  let r;
+  try {
+    const res = await fetch(ENDPOINT, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...tap, ...who }) });
+    r = await res.json();
+  } catch {
+    view.innerHTML = `<p>Keine Verbindung – bitte das Handy gleich noch einmal an den Burger halten.</p>`;
+    return;
+  }
+  history.replaceState(null, "", location.pathname);
+  view.innerHTML = r.ok
+    ? `<p>Danke${r.name ? ", " + esc(r.name.split(" ")[0]) : ""}!</p><div class="big">Besuch Nr. ${r.visits}</div>${status(r)}`
+    : (messages[r.reason] || (() => `<p>Da ist etwas schiefgelaufen.</p>`))(r);
+  view.innerHTML += `<p class="muted">${esc(who.email)} · <a href="#" id="change">nicht du?</a></p>`;
+  document.getElementById("change").onclick = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("email");
+    view.innerHTML = `<p>E-Mail vergessen. Bitte noch einmal an den Burger halten und neu eintragen.</p>`;
+  };
+}
+
+if (!tap.uid || !tap.ctr || !tap.cmac) {
+  view.innerHTML = `<p>Halte dein Handy an den Burger auf der Theke – dann gibt's Punkte.</p>`;
+} else if (localStorage.getItem("email")) {
+  claim({ email: localStorage.getItem("email") });
+} else {
+  showForm();
+}
+</script>
+</body>
+</html>
