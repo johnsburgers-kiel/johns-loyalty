@@ -66,7 +66,7 @@ function showForm() {
     <p>Einmal eintragen, ab dann geht's automatisch.</p>
     <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="deine@email.de">
     <input id="name" type="text" autocomplete="name" placeholder="Name">
-    <input id="postcode" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="PLZ (optional)">
+    <input id="postcode" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="PLZ">
     <label class="consent"><input id="consent" type="checkbox"> Ich bin einverstanden, dass meine Angaben für das Bonusprogramm gespeichert werden. <a href="datenschutz.html">Datenschutz</a></label>
     <button id="go">Punkt sichern</button>`;
   document.getElementById("go").onclick = () => {
@@ -75,7 +75,7 @@ function showForm() {
     const postcode = document.getElementById("postcode").value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Bitte eine gültige E-Mail eingeben.");
     if (!NAME.test(name)) return alert("Bitte einen Namen eingeben (Buchstaben, Leerzeichen, Bindestrich).");
-    if (postcode && !/^\d{5}$/.test(postcode)) return alert("PLZ bitte mit 5 Ziffern.");
+    if (!/^\d{5}$/.test(postcode)) return alert("Bitte deine PLZ eingeben (5 Ziffern).");
     if (!document.getElementById("consent").checked) return alert("Bitte der Speicherung zustimmen.");
     localStorage.setItem("email", email);
     claim({ email, name, postcode });
