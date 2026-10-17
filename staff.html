@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>John's Burgers · Team</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #fff7ed; color: #1f1f1f; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 1.4rem; margin: 0 0 16px; display: flex; justify-content: space-between; align-items: center; }
+  input { width: 100%; box-sizing: border-box; font-size: 1.1rem; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 10px; }
+  button { font-size: 1rem; padding: 12px 18px; border: 0; border-radius: 10px; background: #c2410c; color: #fff; }
+  button:disabled { background: #ccc; }
+  button.link { background: none; color: #c2410c; padding: 0; font-size: .9rem; }
+  .card { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .who b { font-size: 1.1rem; }
+  .who div { color: #666; font-size: .85rem; }
+  .stats { display: flex; gap: 16px; text-align: center; }
+  .stats div { font-size: .75rem; color: #666; }
+  .stats b { display: block; font-size: 1.3rem; color: #1f1f1f; }
+  .ready b { color: #15803d; }
+  .muted { color: #666; font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>John's Burgers · Team <button class="link" id="logout" hidden>Abmelden</button></h1>
+  <div id="view"></div>
+</main>
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const supabase = createClient("https://zhqxjdlqxgjzqamququu.supabase.co", "sb_publishable_N-bZcHBzjBJVY2PXoq2j8Q_g6RHuI3N");
+const view = document.getElementById("view");
+const logout = document.getElementById("logout");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "–");
+let settings = { reward_cost: 10 };
+let timer;
+let seq = 0;
+
+function showLogin(msg = "") {
+  logout.hidden = true;
+  view.innerHTML = `
+    <input id="email" type="email" autocomplete="username" placeholder="E-Mail">
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Passwort">
+    <button id="login">Anmelden</button><p class="muted">${msg}</p>`;
+  document.getElementById("login").onclick = async () => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("pw").value,
+    });
+    error ? showLogin("Anmeldung fehlgeschlagen.") : showSearch();
+  };
+}
+
+async function showSearch() {
+  logout.hidden = false;
+  const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
+  if (data) settings = data;
+  view.innerHTML = `<input id="q" type="search" placeholder="Name oder E-Mail suchen"><div id="list"></div>`;
+  document.getElementById("q").oninput = (e) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => search(e.target.value.trim()), 250);
+  };
+  search("");
+}
+
+async function search(q) {
+  const n = ++seq;
+  const { data, error } = await supabase.rpc("staff_search", { q });
+  if (n !== seq) return;
+  const list = document.getElementById("list");
+  if (error) return (list.innerHTML = `<p class="muted">Kein Zugriff: ${esc(error.message)}</p>`);
+  if (!data.length) return (list.innerHTML = `<p class="muted">Niemand gefunden.</p>`);
+  list.innerHTML = data.map(card).join("");
+  data.forEach((c) => (document.getElementById("r-" + c.id).onclick = () => redeem(c)));
+}
+
+function card(c) {
+  const available = Math.floor(c.points / settings.reward_cost);
+  return `<div class="card">
+    <div class="who"><b>${esc(c.name) || "(kein Name)"}</b><div>${esc(c.email)}${c.postcode ? " · " + esc(c.postcode) : ""}</div><div>zuletzt ${fmt(c.last_claim_at)}</div></div>
+    <div class="stats">
+      <div><b>${c.visits}</b>Besuche</div>
+      <div><b>${c.redemptions}</b>eingelöst</div>
+      <div><b>${c.points}</b>Guthaben</div>
+      <div class="ready"><b>${available}</b>einlösbar</div>
+    </div>
+    <button id="r-${c.id}" ${available ? "" : "disabled"}>Einlösen</button>
+  </div>`;
+}
+
+async function redeem(c) {
+  if (!confirm(`${settings.reward_cost} Punkte von ${c.name || c.email} einlösen?`)) return;
+  const { data, error } = await supabase.rpc("redeem_reward", { p_customer_id: c.id });
+  if (error || !data.ok) alert("Einlösen fehlgeschlagen: " + (error?.message || data.reason));
+  search(document.getElementById("q").value.trim());
+}
+
+logout.onclick = async () => { await supabase.auth.signOut(); showLogin(); };
+
+const { data: { session } } = await supabase.auth.getSession();
+session ? showSearch() : showLogin();
+</script>
+</body>
+</html>
