@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>John's Burgers · Team</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; font-family: "Helvetica Neue", Arial, sans-serif; background: #fff; color: #000; }
@@ -22,15 +24,11 @@
   button:disabled { background: #fff; color: #bbb; border-color: #ddd; cursor: default; }
   button.link { background: none; border: 0; padding: 0; color: #fff; font-size: .78rem; letter-spacing: .14em; }
   button.link:hover:not(:disabled) { background: none; color: #bbb; }
-
-  /* Tabs */
   .tabs { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 20px; }
   .tab { background: #fff; color: #000; }
   .tab + .tab { border-left: 0; }
   .tab:hover:not(.active) { background: #eee; color: #000; }
   .tab.active, .tab.active:hover { background: #000; color: #fff; }
-
-  /* Kunden */
   .card { border: 2px solid #000; padding: 14px 16px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; }
   .who { min-width: 0; }
   .who b { font-family: "Times New Roman", Georgia, serif; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .03em; }
@@ -41,8 +39,6 @@
   .ready b { color: #16a34a; }
   .card button { width: 140px; }
   .muted { color: #6b6b6b; font-size: .9rem; }
-
-  /* Statistik */
   .seg { display: flex; }
   .seg button { background: #fff; color: #000; padding: 8px 14px; font-size: .75rem; }
   .seg button + button { border-left: 0; }
@@ -69,13 +65,20 @@
   .num b { display: block; font-size: 1.15rem; color: #000; letter-spacing: 0; }
   .qrow { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #ddd; font-size: .9rem; }
   .qrow small { display: block; color: #6b6b6b; }
-
+  #map { height: 380px; border: 2px solid #000; background: #f2f2f2; }
+  #map .leaflet-tile-pane { filter: grayscale(1) contrast(1.05); }
+  #map .leaflet-control-zoom a { border-radius: 0; color: #000; }
+  .radius { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 6px; }
+  .radius div { border: 2px solid #000; padding: 8px 10px; font-size: .66rem; color: #6b6b6b; text-transform: uppercase; letter-spacing: .06em; }
+  .radius b { display: block; font-size: 1.4rem; color: #000; letter-spacing: 0; }
+  .credit { font-size: .7rem; color: #6b6b6b; }
   .liberty { display: block; width: 100%; max-width: 420px; margin: 24px auto 0; mix-blend-mode: multiply; opacity: .85; }
   @media (max-width: 700px) {
     .card { grid-template-columns: 1fr; }
     .stats { justify-content: space-between; }
     .stats div { width: auto; flex: 1; }
     .card button { width: 100%; }
+    #map { height: 300px; }
   }
   @media (max-width: 420px) {
     .logo { width: 44px; height: 44px; }
@@ -108,15 +111,20 @@ const logout = document.getElementById("logout");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "–");
 const punkte = (n) => `${n} ${n === 1 ? "Punkt" : "Punkte"}`;
+const gaeste = (n) => `${n} ${n === 1 ? "Gast" : "Gäste"}`;
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const SHOP = [54.3303, 10.1268];
+const RINGS_KM = [2, 5, 10];
+
 let settings = { reward_cost: 10 };
 let timer;
 let seq = 0;
 let statSeq = 0;
 let tab = "kunden";
 let days = 30;
+let map = null;
+let plzTable = null;
 
-/* ---------- Login ---------- */
 function showLogin(msg = "") {
   logout.hidden = true;
   view.innerHTML = `
@@ -132,7 +140,6 @@ function showLogin(msg = "") {
   };
 }
 
-/* ---------- App shell with tabs ---------- */
 async function showApp() {
   logout.hidden = false;
   const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
@@ -152,10 +159,10 @@ function openTab(t) {
   tab = t;
   document.getElementById("t-kunden").classList.toggle("active", t === "kunden");
   document.getElementById("t-stats").classList.toggle("active", t === "stats");
+  if (map) { map.remove(); map = null; }
   t === "kunden" ? showSearch() : showStats();
 }
 
-/* ---------- Kunden ---------- */
 function showSearch() {
   const tv = document.getElementById("tabview");
   tv.innerHTML = `<input id="q" type="search" placeholder="Name oder E-Mail suchen"><div id="list"></div>`;
@@ -199,7 +206,6 @@ async function redeem(c) {
   search(document.getElementById("q")?.value.trim() ?? "");
 }
 
-/* ---------- Statistik ---------- */
 function showStats() {
   const tv = document.getElementById("tabview");
   tv.innerHTML = `
@@ -209,14 +215,32 @@ function showStats() {
   loadStats();
 }
 
+async function getPlz() {
+  if (plzTable) return plzTable;
+  try {
+    const r = await fetch("plz.json");
+    if (!r.ok) throw new Error(r.status);
+    plzTable = await r.json();
+  } catch {
+    return null;
+  }
+  return plzTable;
+}
+
 async function loadStats() {
   const n = ++statSeq;
-  const { data, error } = await supabase.rpc("staff_stats", { p_days: days });
+  const [stats, pcs, plz] = await Promise.all([
+    supabase.rpc("staff_stats", { p_days: days }),
+    supabase.rpc("staff_postcodes", { p_days: days }),
+    getPlz(),
+  ]);
   if (n !== statSeq) return;
   const box = document.getElementById("statbox");
   if (!box) return;
-  if (error) return (box.innerHTML = `<p class="muted">Kein Zugriff: ${esc(error.message)}</p>`);
-  box.innerHTML = renderStats(data);
+  if (stats.error) return (box.innerHTML = `<p class="muted">Kein Zugriff: ${esc(stats.error.message)}</p>`);
+  if (map) { map.remove(); map = null; }
+  box.innerHTML = renderStats(stats.data);
+  drawMap(pcs.error ? null : pcs.data.postcodes, plz);
 }
 
 const kpi = (n, label) => `<div class="kpi"><b>${n}</b><span>${label}</span></div>`;
@@ -241,7 +265,6 @@ function renderStats(s) {
     ${kpi(k.total_customers, "Kunden gesamt")}
   </div>`;
 
-  /* Top 20 */
   html += `<h2 class="sec">Top 20 Gäste · ${p} Tage</h2>`;
   html += s.top_guests.length
     ? s.top_guests.map((g, i) => `
@@ -253,7 +276,6 @@ function renderStats(s) {
       </div>`).join("")
     : `<p class="muted">Noch keine Besuche in diesem Zeitraum.</p>`;
 
-  /* Hours: trim empty hours at both ends */
   html += `<h2 class="sec">Uhrzeiten · ${p} Tage</h2>`;
   const hrs = s.by_hour;
   const a = hrs.findIndex((x) => x.n > 0);
@@ -262,11 +284,9 @@ function renderStats(s) {
     ? `<p class="muted">Noch keine Daten.</p>`
     : bars(hrs.slice(a, b + 1).map((x) => ({ label: `${x.hour} Uhr`, n: x.n })));
 
-  /* Weekdays */
   html += `<h2 class="sec">Wochentage · ${p} Tage</h2>`;
   html += bars(s.by_weekday.map((x) => ({ label: WEEKDAYS[x.dow - 1], n: x.n })));
 
-  /* 12 weeks new vs returning */
   html += `<h2 class="sec">Neu vs. wiederkehrend · 12 Wochen</h2>
     <div class="legend"><i></i>wiederkehrend<i class="new"></i>neu · Woche ab</div>`;
   const wmax = Math.max(0, ...s.weekly.map((w) => w.new + w.returning));
@@ -278,13 +298,16 @@ function renderStats(s) {
       <b>${w.new + w.returning}</b></div>`;
   }).join("");
 
-  /* Postcodes */
+  html += `<h2 class="sec">Karte · Wohnorte der Gäste · ${p} Tage</h2>
+    <div id="mapinfo"><p class="muted">Lade Karte …</p></div>
+    <div id="map"></div>
+    <p class="credit">Kreise = Gäste je PLZ (Mittelpunkt der PLZ) · Ringe: ${RINGS_KM.join(" / ")} km · Karte © OpenStreetMap-Mitwirkende · PLZ-Koordinaten: GeoNames (CC BY 4.0)</p>`;
+
   html += `<h2 class="sec">Top PLZ · ${p} Tage</h2>`;
   html += s.postcodes.length
     ? bars(s.postcodes.map((x) => ({ label: x.postcode, n: x.n })))
     : `<p class="muted">Noch keine Daten.</p>`;
 
-  /* Data quality */
   const q = s.quality;
   html += `<h2 class="sec">Datenqualität</h2>
     <div class="qrow"><div>Sperrzeit-Treffer · ${p} Tage<small>Erneuter Tap innerhalb der Sperrzeit, kein Punkt vergeben</small></div><b>${q.cooldown_hits}</b></div>
@@ -293,6 +316,60 @@ function renderStats(s) {
 
   html += `<p class="muted" style="margin-top:20px">Stand ${new Date(s.generated_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr · Zeiten in Kieler Ortszeit</p>`;
   return html;
+}
+
+function km(a, b) {
+  const R = 6371, r = Math.PI / 180;
+  const dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function drawMap(postcodes, plz) {
+  const info = document.getElementById("mapinfo");
+  const el = document.getElementById("map");
+  if (!info || !el) return;
+  if (!window.L) { info.innerHTML = `<p class="muted">Kartenbibliothek nicht geladen.</p>`; el.remove(); return; }
+  if (!postcodes) { info.innerHTML = `<p class="muted">PLZ-Daten nicht verfügbar.</p>`; el.remove(); return; }
+  if (!plz) { info.innerHTML = `<p class="muted">plz.json nicht gefunden.</p>`; el.remove(); return; }
+
+  const pts = [];
+  let unknown = 0;
+  for (const x of postcodes) {
+    const c = plz[x.plz];
+    if (c) pts.push({ plz: x.plz, n: x.guests, ll: c, d: km(SHOP, c) });
+    else unknown += x.guests;
+  }
+  const total = pts.reduce((s, p) => s + p.n, 0);
+  const share = (r) => (total ? Math.round((100 * pts.filter((p) => p.d <= r).reduce((s, p) => s + p.n, 0)) / total) : 0);
+
+  info.innerHTML = total
+    ? `<div class="radius">${RINGS_KM.map((r) => `<div><b>${share(r)} %</b>bis ${r} km</div>`).join("")}</div>
+       <p class="muted">Basis: ${gaeste(total)} mit PLZ${unknown ? ` · ${gaeste(unknown)} mit unbekannter PLZ nicht auf der Karte` : ""}</p>`
+    : `<p class="muted">Noch keine Gäste mit PLZ in diesem Zeitraum.</p>`;
+
+  map = L.map(el, { scrollWheelZoom: false });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "© OpenStreetMap",
+  }).addTo(map);
+
+  for (const r of RINGS_KM) {
+    L.circle(SHOP, { radius: r * 1000, color: "#000", weight: 1, opacity: 0.5, dashArray: "4 6", fill: false, interactive: false }).addTo(map);
+  }
+
+  const max = Math.max(1, ...pts.map((p) => p.n));
+  for (const p of pts) {
+    L.circleMarker(p.ll, { radius: 6 + 16 * Math.sqrt(p.n / max), color: "#000", weight: 1, fillColor: "#000", fillOpacity: 0.55 })
+      .bindTooltip(`${esc(p.plz)} · ${gaeste(p.n)} · ${p.d.toFixed(1)} km`)
+      .addTo(map);
+  }
+
+  L.circleMarker(SHOP, { radius: 7, color: "#000", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+    .bindTooltip("John's Burgers")
+    .addTo(map);
+
+  map.fitBounds(L.latLng(SHOP).toBounds(2 * 1000 * Math.max(...RINGS_KM)));
 }
 
 logout.onclick = async () => { await supabase.auth.signOut(); showLogin(); };
