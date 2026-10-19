@@ -35,16 +35,18 @@
   .tab { font-size: 1.1rem; }
   .seg { gap: 18px; }
   .seg button { font-size: .9rem; }
-  .card { border: 1px solid #000; padding: 14px 16px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; }
+  .card { padding: 16px 0; border-bottom: 1px solid #e3e3e3; display: grid; grid-template-columns: 1fr auto 140px; align-items: center; gap: 20px; }
   .who { min-width: 0; }
   .who b { font-family: "Libre Caslon Text", Georgia, serif; font-size: 1.2rem; font-weight: 700; }
   .who div { color: #6b6b6b; font-size: .85rem; overflow-wrap: anywhere; }
   .who .meta span + span { margin-left: 14px; }
   .stats { display: flex; text-align: center; }
-  .stats div { width: 78px; font-size: .78rem; color: #6b6b6b; }
+  .stats div { width: 76px; font-size: .78rem; color: #6b6b6b; }
+  .stats div + div { border-left: 1px solid #e3e3e3; }
   .stats b { display: block; font-size: 1.4rem; font-weight: 600; color: #000; }
   .ready b { color: #16a34a; }
   .card button { width: 140px; }
+  .todo { font-size: .85rem; color: #6b6b6b; text-align: center; }
   .muted { color: #6b6b6b; font-size: .9rem; }
   .period { margin: 0; font-size: .85rem; color: #6b6b6b; }
   .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 26px 0 8px; }
@@ -82,10 +84,10 @@
   .credit { font-size: .75rem; color: #6b6b6b; }
   .liberty { display: block; width: 100%; max-width: 420px; margin: 24px auto 0; mix-blend-mode: multiply; opacity: .85; }
   @media (max-width: 700px) {
-    .card { grid-template-columns: 1fr; }
-    .stats { justify-content: space-between; }
+    .card { grid-template-columns: 1fr; gap: 12px; }
     .stats div { width: auto; flex: 1; }
     .card button { width: 100%; }
+    .todo { text-align: left; }
     #map { height: 300px; }
     .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 18px; }
     .kpi:nth-child(3n+1) { border-left: 0; padding-left: 0; }
@@ -198,11 +200,19 @@ async function search(q) {
   if (error) return (list.innerHTML = `<p class="muted">Kein Zugriff: ${esc(error.message)}</p>`);
   if (!data.length) return (list.innerHTML = `<p class="muted">Niemand gefunden.</p>`);
   list.innerHTML = data.map(card).join("");
-  data.forEach((c) => (document.getElementById("r-" + c.id).onclick = () => redeem(c)));
+  data.forEach((c) => {
+    const btn = document.getElementById("r-" + c.id);
+    if (btn) btn.onclick = () => redeem(c);
+  });
 }
 
 function card(c) {
-  const available = Math.floor(c.points / settings.reward_cost);
+  const cost = settings.reward_cost;
+  const available = Math.floor(c.points / cost);
+  const need = cost - (c.points % cost);
+  const action = available
+    ? `<button id="r-${c.id}">Einlösen</button>`
+    : `<div class="todo">noch ${punkte(need)}</div>`;
   return `<div class="card">
     <div class="who"><b>${esc(c.name) || "(kein Name)"}</b><div>${esc(c.email)}</div><div class="meta">${c.postcode ? `<span>PLZ ${esc(c.postcode)}</span>` : ""}<span>zuletzt ${fmt(c.last_claim_at)}</span></div></div>
     <div class="stats">
@@ -211,7 +221,7 @@ function card(c) {
       <div><b>${c.points}</b>Guthaben</div>
       <div class="ready"><b>${available}</b>einlösbar</div>
     </div>
-    <button id="r-${c.id}" ${available ? "" : "disabled"}>Einlösen</button>
+    ${action}
   </div>`;
 }
 
