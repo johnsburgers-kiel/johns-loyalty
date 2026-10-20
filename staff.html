@@ -6,98 +6,95 @@
 <title>John's Burgers – Team</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Libre+Caslon+Text:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400&family=Libre+Caslon+Text:wght@400&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
+  :root { --grey: #6b6b6b; --soft: #a3a3a3; --line: #e6e6e6; --track: #efefef; --go: #15803d; --serif: "Libre Caslon Text", Georgia, serif; }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; background: #fff; color: #000; font-variant-numeric: tabular-nums; font-feature-settings: "zero" 0, "tnum" 1; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-weight: 400; font-size: 16px; line-height: 1.4; background: #fff; color: #000; font-variant-numeric: tabular-nums; font-feature-settings: "zero" 0, "tnum" 1; }
+  b, strong, h1, h2, h3 { font-weight: 400; }
   header { background: #000; color: #fff; }
-  .bar { max-width: 760px; margin: 0 auto; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .brandwrap { display: flex; align-items: center; gap: 14px; }
-  .logo { width: 58px; height: 58px; object-fit: contain; filter: invert(1); }
-  .brand { margin: 0; font-family: "Libre Caslon Text", Georgia, serif; font-weight: 700; font-size: 1.6rem; letter-spacing: .02em; text-transform: uppercase; }
-  .brand span { display: block; margin-top: 4px; font-family: "Archivo", sans-serif; font-weight: 400; font-size: .8rem; letter-spacing: 0; text-transform: none; color: #bbb; }
-  .rule { height: 3px; background: #000; margin-top: 5px; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
-  input { width: 100%; font-family: inherit; font-size: 1.05rem; padding: 12px 14px; margin-bottom: 10px; border: 1px solid #000; border-radius: 0; background: #fff; color: #000; }
-  input:focus { outline: 2px solid #000; outline-offset: 2px; }
-  button { font-family: inherit; font-size: .95rem; font-weight: 600; padding: 12px 20px; border: 1px solid #000; border-radius: 0; background: #000; color: #fff; cursor: pointer; }
-  button:hover:not(:disabled) { background: #fff; color: #000; }
-  button:disabled { background: #fff; color: #bbb; border-color: #ddd; cursor: default; }
-  button.link { background: none; border: 0; padding: 0; color: #fff; font-size: .9rem; font-weight: 500; }
-  button.link:hover:not(:disabled) { background: none; color: #bbb; }
-  .nav { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0 28px; border-bottom: 1px solid #d6d6d6; margin-bottom: 18px; }
-  .tabs, .seg { display: flex; gap: 26px; }
-  .nav button, .nav button:hover:not(:disabled) { background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 10px 0 8px; color: #6b6b6b; font-weight: 500; }
-  .nav button:hover:not(:disabled) { color: #000; }
-  .nav button.active, .nav button.active:hover:not(:disabled) { color: #000; border-bottom-color: #000; }
-  .tab { font-size: 1.1rem; }
-  .seg { gap: 18px; }
-  .seg button { font-size: .9rem; }
-  .card { padding: 16px 0; border-bottom: 1px solid #e3e3e3; display: grid; grid-template-columns: 1fr auto 140px; align-items: center; gap: 20px; }
-  .who { min-width: 0; }
-  .who b { font-family: "Libre Caslon Text", Georgia, serif; font-size: 1.2rem; font-weight: 700; }
-  .who div { color: #6b6b6b; font-size: .85rem; overflow-wrap: anywhere; }
-  .who .meta span + span { margin-left: 14px; }
-  .stats { display: flex; text-align: center; }
-  .stats div { width: 76px; font-size: .78rem; color: #6b6b6b; }
-  .stats div + div { border-left: 1px solid #e3e3e3; }
-  .stats b { display: block; font-size: 1.4rem; font-weight: 600; color: #000; }
-  .ready b { color: #16a34a; }
-  .card button { width: 140px; }
-  .todo { font-size: .85rem; color: #6b6b6b; text-align: center; }
-  .muted { color: #6b6b6b; font-size: .9rem; }
-  .period { margin: 0; font-size: .85rem; color: #6b6b6b; }
-  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 26px 0 8px; }
-  .kpi { padding: 2px 14px; }
-  .kpi:first-child { padding-left: 0; }
-  .kpi + .kpi { border-left: 1px solid #d6d6d6; }
-  .kpi b { display: block; font-family: "Libre Caslon Text", Georgia, serif; font-size: 2.1rem; font-weight: 400; line-height: 1.15; }
-  .kpi span { display: block; font-size: .8rem; color: #6b6b6b; }
-  .sec { margin: 44px 0 12px; font-family: "Libre Caslon Text", Georgia, serif; font-size: 1.35rem; font-weight: 400; }
-  .brow { display: grid; grid-template-columns: 64px 1fr 44px; gap: 10px; align-items: center; margin: 5px 0; font-size: .85rem; }
-  .brow b { text-align: right; font-weight: 600; }
-  .track { display: flex; height: 12px; background: #f2f2f2; }
-  .fill { background: #000; height: 100%; }
-  .fill.new { background: #9a9a9a; }
-  .legend { font-size: .82rem; color: #6b6b6b; margin-bottom: 8px; }
-  .legend i { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 12px; background: #000; vertical-align: -1px; }
-  .legend i.new { background: #9a9a9a; }
-  .legend i:first-child { margin-left: 0; }
-  .trow { display: grid; grid-template-columns: 28px 1fr 64px 64px; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #e3e3e3; }
-  .trow .rank { color: #6b6b6b; }
-  .trow .who b { font-size: 1.05rem; }
-  .num { text-align: center; font-size: .75rem; color: #6b6b6b; }
-  .num b { display: block; font-size: 1.15rem; font-weight: 600; color: #000; }
-  .qrow { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e3e3e3; font-size: .9rem; }
-  .qrow small { display: block; color: #6b6b6b; }
-  .qrow b { font-weight: 600; }
-  #map { height: 380px; border: 1px solid #000; background: #f2f2f2; }
+  .bar { max-width: 640px; margin: 0 auto; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .brandwrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 44px; height: 44px; object-fit: contain; filter: invert(1); }
+  .brand { margin: 0; font-family: var(--serif); font-size: 1.25rem; letter-spacing: .04em; text-transform: uppercase; }
+  .brand span { display: block; margin-top: 2px; font-family: "Archivo", sans-serif; font-size: .8rem; letter-spacing: 0; text-transform: none; color: var(--soft); }
+  .rule { height: 3px; background: #000; margin-top: 4px; }
+  main { max-width: 640px; margin: 0 auto; padding: 8px 16px 32px; }
+  button { font: inherit; color: inherit; background: none; border: 0; border-radius: 0; padding: 0; cursor: pointer; text-align: left; -webkit-tap-highlight-color: transparent; }
+  .btn { display: block; width: 100%; padding: 14px 16px; background: #000; color: #fff; border: 1px solid #000; text-align: center; }
+  .btn:active { background: #fff; color: #000; }
+  .link { color: #fff; font-size: .9rem; }
+  .link:active { color: var(--soft); }
+  input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; margin: 16px 0 4px; border: 1px solid #cfcfcf; border-radius: 0; background: #fff; color: #000; -webkit-appearance: none; appearance: none; }
+  input:focus { outline: none; border-color: #000; }
+  .login input { margin: 16px 0 0; }
+  .login .btn { margin-top: 16px; }
+  .muted { color: var(--grey); font-size: .9rem; }
+  .tabs, .switch { display: flex; border-bottom: 1px solid var(--line); }
+  .tabs { gap: 28px; }
+  .switch { gap: 22px; margin-top: 24px; }
+  .tabs button, .switch button { padding: 14px 0 10px; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--grey); }
+  .switch button { font-size: .95rem; padding: 10px 0 8px; }
+  .tabs button.on, .switch button.on { color: #000; border-bottom-color: #000; }
+  .item { border-bottom: 1px solid var(--line); }
+  .head { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 0; }
+  .grow { display: block; flex: 1; min-width: 0; }
+  .chev { width: 14px; height: 14px; flex: none; color: var(--soft); transition: transform .15s; }
+  .item.open > .head .chev { transform: rotate(90deg); }
+  .name { display: block; font-family: var(--serif); font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
+  .status { display: block; margin-top: 3px; font-size: .9rem; color: var(--grey); }
+  .status.go { color: var(--go); }
+  .stamps { display: flex; gap: 3px; max-width: 240px; margin-top: 10px; }
+  .stamps i { flex: 1; height: 4px; background: var(--track); }
+  .stamps i.f { background: #000; }
+  .detail { padding: 0 0 18px; }
+  .detail .btn { margin-top: 14px; }
+  .kv { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .95rem; }
+  .kv span:first-child { color: var(--grey); flex: none; }
+  .kv span:last-child { text-align: right; overflow-wrap: anywhere; min-width: 0; }
+  .hero { padding: 24px 0 0; }
+  .hero .lab { color: var(--grey); font-size: .95rem; }
+  .hero .big { font-family: var(--serif); font-size: 56px; line-height: 1.1; margin-right: 8px; }
+  .hero .unit { color: var(--grey); }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .row small { display: block; color: var(--grey); font-size: .85rem; margin-top: 2px; }
+  .row .n { font-family: var(--serif); font-size: 22px; }
+  .row.sm .n { font-size: 18px; }
+  .body .row:last-child { border-bottom: 0; }
+  .secs { margin-top: 28px; border-top: 1px solid var(--line); }
+  .title { display: block; font-family: var(--serif); font-size: 18px; }
+  .sum { display: block; margin-top: 3px; font-size: .9rem; color: var(--grey); }
+  .body { padding: 0 0 20px; }
+  .sub { color: var(--grey); font-size: .85rem; margin: 14px 0 6px; }
+  .brow { display: grid; grid-template-columns: 52px 1fr 40px; gap: 10px; align-items: center; padding: 4px 0; font-size: .85rem; }
+  .brow > span:first-child { color: var(--grey); }
+  .brow > span:last-child { text-align: right; }
+  .track { display: flex; height: 6px; background: var(--track); }
+  .fill { display: block; height: 100%; background: #000; }
+  .fill.nw { background: var(--soft); }
+  .legend { display: flex; gap: 16px; font-size: .85rem; color: var(--grey); margin: 14px 0 8px; }
+  .legend i { display: inline-block; width: 10px; height: 6px; background: #000; margin-right: 6px; vertical-align: 2px; }
+  .legend i.nw { background: var(--soft); }
+  .lrow { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .lrow:last-child { border-bottom: 0; }
+  .lrow .rk { color: var(--soft); font-size: .85rem; }
+  .lrow .nm { font-family: var(--serif); font-size: 17px; overflow-wrap: anywhere; min-width: 0; }
+  .note, .credit { font-size: .8rem; color: var(--grey); }
+  .stand { margin-top: 24px; color: var(--grey); font-size: .85rem; }
+  #map { height: 280px; margin-top: 14px; border: 1px solid #000; background: var(--track); }
   #map .leaflet-tile-pane { filter: grayscale(1) contrast(1.05); }
-  #map .leaflet-control-zoom a { border-radius: 0; color: #000; }
-  .radius { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 10px; }
-  .radius div { padding: 2px 14px; font-size: .8rem; color: #6b6b6b; }
-  .radius div:first-child { padding-left: 0; }
-  .radius div + div { border-left: 1px solid #d6d6d6; }
-  .radius b { display: block; font-family: "Libre Caslon Text", Georgia, serif; font-size: 1.7rem; font-weight: 400; color: #000; }
-  .credit { font-size: .75rem; color: #6b6b6b; }
-  .liberty { display: block; width: 100%; max-width: 420px; margin: 24px auto 0; mix-blend-mode: multiply; opacity: .85; }
-  @media (max-width: 700px) {
-    .card { grid-template-columns: 1fr; gap: 12px; }
-    .stats div { width: auto; flex: 1; }
-    .card button { width: 100%; }
-    .todo { text-align: left; }
-    #map { height: 300px; }
-    .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 18px; }
-    .kpi:nth-child(3n+1) { border-left: 0; padding-left: 0; }
-  }
-  @media (max-width: 420px) {
-    .logo { width: 44px; height: 44px; }
-    .brand { font-size: 1.25rem; }
-    .trow { grid-template-columns: 22px 1fr 52px 52px; gap: 6px; }
-    .kpi { padding: 2px 10px; }
-    .kpi b { font-size: 1.8rem; }
+  #map .leaflet-bar { border-radius: 0; box-shadow: none; border: 1px solid #000; }
+  #map .leaflet-bar a { border-radius: 0; color: #000; }
+  .leaflet-tooltip { border-radius: 0; box-shadow: none; border: 1px solid #000; font-family: inherit; }
+  .liberty { display: block; width: 100%; max-width: 360px; margin: 24px auto 0; mix-blend-mode: multiply; opacity: .85; }
+  @media (min-width: 700px) {
+    #map { height: 360px; }
+    .hero .big { font-size: 64px; }
+    .logo { width: 52px; height: 52px; }
+    .brand { font-size: 1.45rem; }
   }
 </style>
 </head>
@@ -124,11 +121,16 @@ const view = document.getElementById("view");
 const logout = document.getElementById("logout");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "–");
+const num = (n) => Number(n ?? 0).toLocaleString("de-DE");
 const punkte = (n) => `${n} ${n === 1 ? "Punkt" : "Punkte"}`;
-const gaeste = (n) => `${n} ${n === 1 ? "Gast" : "Gäste"}`;
+const gaeste = (n) => `${num(n)} ${n === 1 ? "Gast" : "Gäste"}`;
+const besuche = (n) => `${num(n)} ${n === 1 ? "Besuch" : "Besuche"}`;
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const WEEKDAYS_LONG = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const SHOP = [54.3303, 10.1268];
 const RINGS_KM = [2, 5, 10];
+const MIN_VISITS_FOR_PEAK = 50;
+const CHEV = `<svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2.5 9.5 7 5 11.5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`;
 
 let settings = { reward_cost: 10 };
 let timer;
@@ -138,13 +140,27 @@ let tab = "kunden";
 let days = 30;
 let map = null;
 let plzTable = null;
+let customers = new Map();
+let openId = null;
+let geo = null;
+const openSecs = new Set();
+
+const kv = (k, v) => `<div class="kv"><span>${k}</span><span>${v}</span></div>`;
+const row = (label, n, note = "", cls = "") => `<div class="row${cls ? " " + cls : ""}"><span>${label}${note ? `<small>${note}</small>` : ""}</span><span class="n">${num(n)}</span></div>`;
+
+function dropMap() {
+  if (map) { map.remove(); map = null; }
+}
 
 function showLogin(msg = "") {
   logout.hidden = true;
   view.innerHTML = `
-    <input id="email" type="email" autocomplete="username" placeholder="E-Mail">
-    <input id="pw" type="password" autocomplete="current-password" placeholder="Passwort">
-    <button id="login">Anmelden</button><p class="muted">${msg}</p>`;
+    <div class="login">
+      <input id="email" type="email" autocomplete="username" placeholder="E-Mail">
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Passwort">
+      <button class="btn" id="login">Anmelden</button>
+      <p class="muted">${msg}</p>
+    </div>`;
   document.getElementById("login").onclick = async () => {
     const { error } = await supabase.auth.signInWithPassword({
       email: document.getElementById("email").value.trim(),
@@ -159,12 +175,9 @@ async function showApp() {
   const { data } = await supabase.from("settings").select("*").eq("id", 1).maybeSingle();
   if (data) settings = data;
   view.innerHTML = `
-    <div class="nav">
-      <div class="tabs">
-        <button class="tab" id="t-kunden">Kunden</button>
-        <button class="tab" id="t-stats">Statistik</button>
-      </div>
-      <div class="seg" id="seg"></div>
+    <div class="tabs">
+      <button id="t-kunden">Kunden</button>
+      <button id="t-stats">Statistik</button>
     </div>
     <div id="tabview"></div>`;
   document.getElementById("t-kunden").onclick = () => openTab("kunden");
@@ -174,21 +187,38 @@ async function showApp() {
 
 function openTab(t) {
   tab = t;
-  document.getElementById("t-kunden").classList.toggle("active", t === "kunden");
-  document.getElementById("t-stats").classList.toggle("active", t === "stats");
-  if (map) { map.remove(); map = null; }
+  document.getElementById("t-kunden").classList.toggle("on", t === "kunden");
+  document.getElementById("t-stats").classList.toggle("on", t === "stats");
+  dropMap();
   t === "kunden" ? showSearch() : showStats();
 }
 
 function showSearch() {
-  document.getElementById("seg").innerHTML = "";
   const tv = document.getElementById("tabview");
-  tv.innerHTML = `<input id="q" type="search" placeholder="Name oder E-Mail suchen"><div id="list"></div>`;
+  tv.innerHTML = `<input id="q" type="search" placeholder="Name oder E-Mail suchen" autocomplete="off"><div id="list"></div>`;
   document.getElementById("q").oninput = (e) => {
     clearTimeout(timer);
     timer = setTimeout(() => search(e.target.value.trim()), 250);
   };
+  document.getElementById("list").onclick = (e) => {
+    const r = e.target.closest("[data-redeem]");
+    if (r) return redeem(customers.get(r.dataset.redeem));
+    const h = e.target.closest(".item > .head");
+    if (!h) return;
+    const id = h.parentElement.dataset.id;
+    openId = openId === id ? null : id;
+    applyOpen();
+  };
   search("");
+}
+
+function applyOpen() {
+  document.querySelectorAll("#list .item").forEach((el) => {
+    const on = el.dataset.id === openId;
+    el.classList.toggle("open", on);
+    el.querySelector(".head").setAttribute("aria-expanded", String(on));
+    el.querySelector(".detail").hidden = !on;
+  });
 }
 
 async function search(q) {
@@ -199,33 +229,38 @@ async function search(q) {
   if (!list) return;
   if (error) return (list.innerHTML = `<p class="muted">Kein Zugriff: ${esc(error.message)}</p>`);
   if (!data.length) return (list.innerHTML = `<p class="muted">Niemand gefunden.</p>`);
-  list.innerHTML = data.map(card).join("");
-  data.forEach((c) => {
-    const btn = document.getElementById("r-" + c.id);
-    if (btn) btn.onclick = () => redeem(c);
-  });
+  customers = new Map(data.map((c) => [String(c.id), c]));
+  list.innerHTML = data.map(item).join("");
+  applyOpen();
 }
 
-function card(c) {
+function item(c) {
   const cost = settings.reward_cost;
-  const available = Math.floor(c.points / cost);
-  const need = cost - (c.points % cost);
-  const action = available
-    ? `<button id="r-${c.id}">Einlösen</button>`
-    : `<div class="todo">noch ${punkte(need)}</div>`;
-  return `<div class="card">
-    <div class="who"><b>${esc(c.name) || "(kein Name)"}</b><div>${esc(c.email)}</div><div class="meta">${c.postcode ? `<span>PLZ ${esc(c.postcode)}</span>` : ""}<span>zuletzt ${fmt(c.last_claim_at)}</span></div></div>
-    <div class="stats">
-      <div><b>${c.visits}</b>Besuche</div>
-      <div><b>${c.redemptions}</b>eingelöst</div>
-      <div><b>${c.points}</b>Guthaben</div>
-      <div class="ready"><b>${available}</b>einlösbar</div>
+  const id = esc(String(c.id));
+  const ready = c.points >= cost;
+  const free = Math.floor(c.points / cost);
+  const filled = ready ? cost : c.points % cost;
+  const status = ready
+    ? `<span class="status go">${free > 1 ? `${free} Gratis-Burger bereit` : "Gratis-Burger bereit"}</span>`
+    : `<span class="status">${c.points % cost} von ${cost}</span>`;
+  const stamps = Array.from({ length: cost }, (_, i) => `<i${i < filled ? ' class="f"' : ""}></i>`).join("");
+  return `<div class="item" data-id="${id}">
+    <button class="head" aria-expanded="false">
+      <span class="grow"><span class="name">${esc(c.name) || "(kein Name)"}</span>${status}<span class="stamps">${stamps}</span></span>${CHEV}
+    </button>
+    <div class="detail" hidden>
+      ${kv("E-Mail", esc(c.email) || "–")}
+      ${kv("Besuche insgesamt", num(c.visits))}
+      ${kv("Schon eingelöst", num(c.redemptions))}
+      ${kv("Zuletzt da", fmt(c.last_claim_at))}
+      ${kv("PLZ", c.postcode ? esc(c.postcode) : "–")}
+      ${ready ? `<button class="btn" data-redeem="${id}">Burger einlösen</button>` : ""}
     </div>
-    ${action}
   </div>`;
 }
 
 async function redeem(c) {
+  if (!c) return;
   if (!confirm(`${punkte(settings.reward_cost)} von ${c.name || c.email} einlösen?`)) return;
   const { data, error } = await supabase.rpc("redeem_reward", { p_customer_id: c.id });
   if (error || !data.ok) alert("Einlösen fehlgeschlagen: " + (error?.message || data.reason));
@@ -233,13 +268,19 @@ async function redeem(c) {
 }
 
 function showStats() {
-  const seg = document.getElementById("seg");
-  seg.innerHTML = [7, 30, 90].map((d) => `<button data-d="${d}" class="${d === days ? "active" : ""}">${d} Tage</button>`).join("");
-  seg.querySelectorAll("button").forEach((b) => (b.onclick = () => { days = Number(b.dataset.d); showStats(); }));
   const tv = document.getElementById("tabview");
-  tv.innerHTML = `
-    <p class="period">Alle Zahlen beziehen sich auf die letzten ${days} Tage, außer „heute“ und „Kunden gesamt“.</p>
-    <div id="statbox"><p class="muted">Lade …</p></div>`;
+  tv.innerHTML = `<div id="statbox"><p class="muted">Lade …</p></div>`;
+  document.getElementById("statbox").onclick = (e) => {
+    const d = e.target.closest("[data-d]");
+    if (d) {
+      days = Number(d.dataset.d);
+      document.querySelectorAll("[data-d]").forEach((b) => b.classList.toggle("on", Number(b.dataset.d) === days));
+      loadStats();
+      return;
+    }
+    const h = e.target.closest(".sec > .head");
+    if (h) toggleSec(h.parentElement.dataset.sec);
+  };
   loadStats();
 }
 
@@ -266,84 +307,42 @@ async function loadStats() {
   const box = document.getElementById("statbox");
   if (!box) return;
   if (stats.error) return (box.innerHTML = `<p class="muted">Kein Zugriff: ${esc(stats.error.message)}</p>`);
-  if (map) { map.remove(); map = null; }
+  dropMap();
+  geo = geoData(pcs.error ? null : pcs.data.postcodes, plz);
   box.innerHTML = renderStats(stats.data);
-  drawMap(pcs.error ? null : pcs.data.postcodes, plz);
+  if (openSecs.has("geo")) drawMap();
 }
 
-const kpi = (n, label) => `<div class="kpi"><b>${n}</b><span>${label}</span></div>`;
+function toggleSec(name) {
+  const el = document.querySelector(`.sec[data-sec="${name}"]`);
+  if (!el) return;
+  const on = !openSecs.has(name);
+  on ? openSecs.add(name) : openSecs.delete(name);
+  el.classList.toggle("open", on);
+  el.querySelector(".head").setAttribute("aria-expanded", String(on));
+  el.querySelector(".body").hidden = !on;
+  if (on && name === "geo") map ? map.invalidateSize() : drawMap();
+}
+
+function sec(name, title, sum, body) {
+  const on = openSecs.has(name);
+  return `<div class="sec item${on ? " open" : ""}" data-sec="${name}">
+    <button class="head" aria-expanded="${on}"><span class="grow"><span class="title">${title}</span><span class="sum">${sum}</span></span>${CHEV}</button>
+    <div class="body"${on ? "" : " hidden"}>${body}</div>
+  </div>`;
+}
 
 function bars(rows) {
-  const max = Math.max(0, ...rows.map((r) => r.n));
+  const total = (r) => r.parts.reduce((a, p) => a + p.n, 0);
+  const max = Math.max(0, ...rows.map(total));
   return rows.map((r) => `
     <div class="brow"><span>${esc(r.label)}</span>
-      <div class="track"><div class="fill" style="width:${max ? (r.n / max) * 100 : 0}%"></div></div>
-      <b>${r.n}</b></div>`).join("");
+      <span class="track">${r.parts.map((p) => `<span class="fill${p.cls ? " " + p.cls : ""}" style="width:${max ? (p.n / max) * 100 : 0}%"></span>`).join("")}</span>
+      <span>${num(total(r))}</span></div>`).join("");
 }
 
-function renderStats(s) {
-  const k = s.kpis;
-  let html = `<div class="kpis">
-    ${kpi(k.visits_today, "Besuche heute")}
-    ${kpi(k.visits_period, "Besuche")}
-    ${kpi(k.unique_guests, "Gäste")}
-    ${kpi(k.new_guests, "Neue Gäste")}
-    ${kpi(k.redemptions, "Einlösungen")}
-    ${kpi(k.total_customers, "Kunden gesamt")}
-  </div>`;
-
-  html += `<h2 class="sec">Top 20 Gäste</h2>`;
-  html += s.top_guests.length
-    ? s.top_guests.map((g, i) => `
-      <div class="trow">
-        <span class="rank">${i + 1}</span>
-        <div class="who"><b>${esc(g.name) || "(kein Name)"}</b><div class="meta"><span>${esc(g.email)}</span><span>zuletzt ${fmt(g.last_visit)}</span></div></div>
-        <div class="num"><b>${g.visits_period}</b>im Zeitraum</div>
-        <div class="num"><b>${g.visits_total}</b>insgesamt</div>
-      </div>`).join("")
-    : `<p class="muted">Noch keine Besuche in diesem Zeitraum.</p>`;
-
-  html += `<h2 class="sec">Uhrzeiten</h2>`;
-  const hrs = s.by_hour;
-  const a = hrs.findIndex((x) => x.n > 0);
-  const b = hrs.findLastIndex((x) => x.n > 0);
-  html += a === -1
-    ? `<p class="muted">Noch keine Daten.</p>`
-    : bars(hrs.slice(a, b + 1).map((x) => ({ label: `${x.hour} Uhr`, n: x.n })));
-
-  html += `<h2 class="sec">Wochentage</h2>`;
-  html += bars(s.by_weekday.map((x) => ({ label: WEEKDAYS[x.dow - 1], n: x.n })));
-
-  html += `<h2 class="sec">Neu und wiederkehrend, letzte 12 Wochen</h2>
-    <div class="legend"><i></i>wiederkehrend<i class="new"></i>neu</div>`;
-  const wmax = Math.max(0, ...s.weekly.map((w) => w.new + w.returning));
-  html += s.weekly.map((w) => {
-    const label = new Date(w.week_start).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
-    const pct = (n) => (wmax ? (n / wmax) * 100 : 0);
-    return `<div class="brow"><span>${label}</span>
-      <div class="track"><div class="fill" style="width:${pct(w.returning)}%"></div><div class="fill new" style="width:${pct(w.new)}%"></div></div>
-      <b>${w.new + w.returning}</b></div>`;
-  }).join("");
-
-  html += `<h2 class="sec">Wo unsere Gäste wohnen</h2>
-    <div id="mapinfo"><p class="muted">Lade Karte …</p></div>
-    <div id="map"></div>
-    <p class="credit">Jeder Kreis ist eine Postleitzahl, je größer, desto mehr Gäste. Ringe bei ${RINGS_KM.join(", ")} km. Karte © OpenStreetMap-Mitwirkende, PLZ-Koordinaten von GeoNames (CC BY 4.0).</p>`;
-
-  html += `<h2 class="sec">Häufigste Postleitzahlen</h2>`;
-  html += s.postcodes.length
-    ? bars(s.postcodes.map((x) => ({ label: x.postcode, n: x.n })))
-    : `<p class="muted">Noch keine Daten.</p>`;
-
-  const q = s.quality;
-  html += `<h2 class="sec">Datenqualität</h2>
-    <div class="qrow"><div>Sperrzeit-Treffer<small>Erneuter Tap innerhalb der Sperrzeit, kein Punkt vergeben</small></div><b>${q.cooldown_hits}</b></div>
-    <div class="qrow"><div>Seite neu geladen<small>Gleicher Link erneut geöffnet, harmlos</small></div><b>${q.reloads}</b></div>
-    <div class="qrow"><div>PLZ fehlt oder ungültig<small>Alle Kunden</small></div><b>${q.bad_postcodes}</b></div>`;
-
-  html += `<p class="muted" style="margin-top:24px">Stand ${new Date(s.generated_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr, alle Zeiten in Kieler Ortszeit.</p>`;
-  return html;
-}
+const simple = (label, n) => ({ label, parts: [{ n }] });
+const top = (arr) => arr.reduce((a, b) => (b.n > a.n ? b : a), arr[0]);
 
 function km(a, b) {
   const R = 6371, r = Math.PI / 180;
@@ -352,14 +351,9 @@ function km(a, b) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function drawMap(postcodes, plz) {
-  const info = document.getElementById("mapinfo");
-  const el = document.getElementById("map");
-  if (!info || !el) return;
-  if (!window.L) { info.innerHTML = `<p class="muted">Kartenbibliothek nicht geladen.</p>`; el.remove(); return; }
-  if (!postcodes) { info.innerHTML = `<p class="muted">PLZ-Daten nicht verfügbar.</p>`; el.remove(); return; }
-  if (!plz) { info.innerHTML = `<p class="muted">plz.json nicht gefunden.</p>`; el.remove(); return; }
-
+function geoData(postcodes, plz) {
+  if (!postcodes) return { error: "PLZ-Daten nicht verfügbar" };
+  if (!plz) return { error: "plz.json nicht gefunden" };
   const pts = [];
   let unknown = 0;
   for (const x of postcodes) {
@@ -368,14 +362,97 @@ function drawMap(postcodes, plz) {
     else unknown += x.guests;
   }
   const total = pts.reduce((s, p) => s + p.n, 0);
-  const share = (r) => (total ? Math.round((100 * pts.filter((p) => p.d <= r).reduce((s, p) => s + p.n, 0)) / total) : 0);
+  const share = (r) => (total ? Math.round((100 * pts.filter((p) => p.d < r).reduce((s, p) => s + p.n, 0)) / total) : 0);
+  return { pts, total, unknown, share };
+}
 
-  info.innerHTML = total
-    ? `<div class="radius">${RINGS_KM.map((r) => `<div><b>${share(r)} %</b>wohnen bis ${r} km entfernt</div>`).join("")}</div>
-       <p class="muted">Grundlage: ${gaeste(total)} mit Postleitzahl${unknown ? `, dazu ${gaeste(unknown)} mit unbekannter PLZ` : ""}.</p>`
-    : `<p class="muted">Noch keine Gäste mit Postleitzahl in diesem Zeitraum.</p>`;
+function renderStats(s) {
+  const k = s.kpis;
+  const nw = k.new_guests, ug = k.unique_guests;
+  const guestNote = nw > 0 ? (nw === ug ? `alle ${num(nw)} neu` : `davon ${num(nw)} neu`) : "";
 
-  map = L.map(el, { scrollWheelZoom: false });
+  let html = `<div class="hero"><div class="lab">Heute</div><span class="big">${num(k.visits_today)}</span><span class="unit">${k.visits_today === 1 ? "Besuch" : "Besuche"}</span></div>`;
+  html += `<div class="switch">${[7, 30, 90].map((d) => `<button data-d="${d}" class="${d === days ? "on" : ""}">${d} Tage</button>`).join("")}</div>`;
+  html += row("Besuche", k.visits_period);
+  html += row("Gäste", ug, guestNote);
+  html += row("Gratis-Burger eingelöst", k.redemptions);
+  html += row("Kunden insgesamt", k.total_customers);
+
+  const tg = s.top_guests;
+  const regSum = tg.length
+    ? `${esc(tg[0].name) || "(kein Name)"} vorne, ${besuche(tg[0].visits_period)}`
+    : "Noch keine Besuche in diesem Zeitraum";
+  const regBody = tg.length
+    ? `<p class="sub">Besuche in den letzten ${days} Tagen</p>` + tg.map((g, i) => `
+      <div class="lrow"><span class="rk">${i + 1}</span><span class="nm">${esc(g.name) || "(kein Name)"}</span><span>${num(g.visits_period)}</span></div>`).join("")
+    : `<p class="muted">Noch keine Besuche in diesem Zeitraum.</p>`;
+
+  const wd = s.by_weekday, hrs = s.by_hour;
+  let whenSum = "Noch zu wenige Besuche für eine Aussage";
+  if (k.visits_period >= MIN_VISITS_FOR_PEAK && wd.length && hrs.length) {
+    const d = top(wd), h = top(hrs);
+    whenSum = `Stärkster Tag ${WEEKDAYS_LONG[d.dow - 1]}, stärkste Stunde ${h.hour} bis ${h.hour + 1} Uhr`;
+  }
+  const a = hrs.findIndex((x) => x.n > 0);
+  const b = hrs.findLastIndex((x) => x.n > 0);
+  const whenBody = a === -1
+    ? `<p class="muted">Noch keine Besuche in diesem Zeitraum.</p>`
+    : `<p class="sub">Wochentage</p>${bars(wd.map((x) => simple(WEEKDAYS[x.dow - 1], x.n)))}
+       <p class="sub">Uhrzeiten</p>${bars(hrs.slice(a, b + 1).map((x) => simple(`${x.hour} Uhr`, x.n)))}`;
+
+  let geoSum, geoBody = "";
+  if (geo.error) {
+    geoSum = geo.error;
+    geoBody = `<p class="muted">${geo.error}.</p>`;
+  } else {
+    geoSum = geo.total ? `${geo.share(2)} % wohnen unter 2 km entfernt` : "Noch keine Gäste mit Postleitzahl in diesem Zeitraum";
+    geoBody = `<div id="map"></div>`;
+    if (geo.total) {
+      geoBody += `<p class="sub">Entfernung zum Laden</p>${RINGS_KM.map((r) => kv(`Unter ${r} km`, `${geo.share(r)} %`)).join("")}
+        <p class="note">Grundlage: ${gaeste(geo.total)} mit Postleitzahl${geo.unknown ? `, dazu ${gaeste(geo.unknown)} mit unbekannter PLZ` : ""}.</p>`;
+    }
+  }
+  geoBody += `<p class="sub">Häufigste Postleitzahlen</p>`;
+  geoBody += s.postcodes.length
+    ? s.postcodes.map((x) => kv(esc(x.postcode), num(x.n))).join("")
+    : `<p class="muted">Noch keine Daten.</p>`;
+  geoBody += `<p class="credit">Jeder Kreis ist eine Postleitzahl, je größer, desto mehr Gäste. Ringe bei ${RINGS_KM.join(", ")} km. Karte © OpenStreetMap-Mitwirkende, PLZ-Koordinaten von GeoNames (CC BY 4.0).</p>`;
+
+  const weekBody = s.weekly.length
+    ? `<div class="legend"><span><i></i>wiederkehrend</span><span><i class="nw"></i>neu</span></div>` +
+      bars(s.weekly.map((w) => ({
+        label: new Date(w.week_start).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
+        parts: [{ n: w.returning }, { n: w.new, cls: "nw" }],
+      })))
+    : `<p class="muted">Noch keine Daten.</p>`;
+
+  const q = s.quality;
+  const qSum = q.bad_postcodes === 0
+    ? "Alles in Ordnung"
+    : `${num(q.bad_postcodes)} ${q.bad_postcodes === 1 ? "Kunde" : "Kunden"} ohne gültige PLZ`;
+  const qBody =
+    row("Sperrzeit-Treffer", q.cooldown_hits, "Erneuter Tap innerhalb der Sperrzeit, kein Punkt vergeben", "sm") +
+    row("Seite neu geladen", q.reloads, "Gleicher Link erneut geöffnet, harmlos", "sm") +
+    row("PLZ fehlt oder ungültig", q.bad_postcodes, "Alle Kunden", "sm");
+
+  html += `<div class="secs">
+    ${sec("regulars", "Stammgäste", regSum, regBody)}
+    ${sec("when", "Wann Gäste kommen", whenSum, whenBody)}
+    ${sec("geo", "Wo Gäste wohnen", geoSum, geoBody)}
+    ${sec("weekly", "Neu und wiederkehrend", "Letzte 12 Wochen, unabhängig vom Zeitraum oben", weekBody)}
+    ${sec("quality", "Datenqualität", qSum, qBody)}
+  </div>`;
+
+  html += `<p class="stand">Stand ${new Date(s.generated_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr, Kieler Ortszeit</p>`;
+  return html;
+}
+
+function drawMap() {
+  const el = document.getElementById("map");
+  if (!el || !geo || geo.error) return;
+  if (!window.L) { el.outerHTML = `<p class="muted">Kartenbibliothek nicht geladen.</p>`; return; }
+  dropMap();
+  map = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "© OpenStreetMap",
@@ -385,8 +462,8 @@ function drawMap(postcodes, plz) {
     L.circle(SHOP, { radius: r * 1000, color: "#000", weight: 1, opacity: 0.5, dashArray: "4 6", fill: false, interactive: false }).addTo(map);
   }
 
-  const max = Math.max(1, ...pts.map((p) => p.n));
-  for (const p of pts) {
+  const max = Math.max(1, ...geo.pts.map((p) => p.n));
+  for (const p of geo.pts) {
     L.circleMarker(p.ll, { radius: 6 + 16 * Math.sqrt(p.n / max), color: "#000", weight: 1, fillColor: "#000", fillOpacity: 0.55 })
       .bindTooltip(`PLZ ${esc(p.plz)}: ${gaeste(p.n)}, ${p.d.toFixed(1).replace(".", ",")} km entfernt`)
       .addTo(map);
@@ -397,6 +474,7 @@ function drawMap(postcodes, plz) {
     .addTo(map);
 
   map.fitBounds(L.latLng(SHOP).toBounds(2 * 1000 * Math.max(...RINGS_KM)));
+  requestAnimationFrame(() => map && map.invalidateSize());
 }
 
 logout.onclick = async () => { await supabase.auth.signOut(); showLogin(); };
